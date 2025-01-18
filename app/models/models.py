@@ -1,52 +1,44 @@
-from sqlalchemy import Column, Integer, String, Text, Date, ForeignKey
-from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
+from sqlmodel import SQLModel, Field, Relationship
+from typing import List, Optional   
+from datetime import date
 
-Base = declarative_base()
-
-class Categoria(Base):
-    __tablename__ = 'categoria'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    nombre = Column(String(100), nullable=False)
-    leyendas = relationship("Leyenda", back_populates="categoria_relacion")
+class Categoria(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    nombre: str = Field(max_length=100)
+    leyendas: List["Leyenda"] = Relationship(back_populates="categoria_relacion")   
 
 
-class Provincia(Base):
-    __tablename__ = 'provincia'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    nombre = Column(String(100), nullable=False)
-    cantones = relationship("Canton", back_populates="provincia_relacion")
+class Provincia(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    nombre: str = Field(max_length=100)
+    cantones: List["Canton"] = Relationship(back_populates="provincia_relacion")
+
+class Canton(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    nombre: str = Field(max_length=100)
+    provincia: int = Field(foreign_key="provincia.id")
+    distritos: List["Distrito"] = Relationship(back_populates="canton_relacion")
+    provincia_relacion: "Provincia" = Relationship(back_populates="cantones")
+    
+class Distrito(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    nombre: str = Field(max_length=100)
+    canton: int = Field(foreign_key="canton.id")
+    canton_relacion: "Canton" = Relationship(back_populates="distritos")
 
 
-class Canton(Base):
-    __tablename__ = 'canton'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    nombre = Column(String(100), nullable=False)
-    provincia_id = Column(Integer, ForeignKey('provincia.id'), nullable=False)
-    distritos = relationship("Distrito", back_populates="canton_relacion")
-    provincia_relacion = relationship("Provincia", back_populates="cantones")
-
-
-class Distrito(Base):
-    __tablename__ = 'distrito'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    nombre = Column(String(100), nullable=False)
-    canton_id = Column(Integer, ForeignKey('canton.id'), nullable=False)
-    canton_relacion = relationship("Canton", back_populates="distritos")
-
-
-class Leyenda(Base):
-    __tablename__ = 'leyendas'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    imagen = Column(String(500), nullable=False)
-    nombre = Column(String(100), nullable=False)
-    descripcion = Column(Text, nullable=False)
-    fecha_de_leyenda = Column(Date, nullable=False)
-    categoria = Column(Integer, ForeignKey('categoria.id'), nullable=False)
-    provincia = Column(Integer, ForeignKey('provincia.id'), nullable=False)
-    canton = Column(Integer, ForeignKey('canton.id'), nullable=False)
-    distrito = Column(Integer, ForeignKey('distrito.id'), nullable=False)
-    categoria_relacion = relationship("Categoria", back_populates="leyendas")
-    provincia_relacion = relationship("Provincia")
-    canton_relacion = relationship("Canton")
-    distrito_relacion = relationship("Distrito")
+class Leyenda(SQLModel, table=True):
+    __tablename__ = "leyendas"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    imagen: str = Field(max_length=500)
+    nombre: str = Field(max_length=100)
+    descripcion: str
+    fecha_de_leyenda: date
+    categoria: int = Field(foreign_key="categoria.id")
+    provincia: int = Field(foreign_key="provincia.id")
+    canton: int = Field(foreign_key="canton.id")
+    distrito: int = Field(foreign_key="distrito.id")
+    categoria_relacion: Categoria = Relationship(back_populates="leyendas")
+    provincia_relacion: Provincia = Relationship()
+    canton_relacion: Canton = Relationship()
+    distrito_relacion: Distrito = Relationship()
