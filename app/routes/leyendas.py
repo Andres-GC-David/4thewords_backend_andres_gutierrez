@@ -68,6 +68,13 @@ def obtener_leyenda(leyenda_id: int, db: Session = Depends(get_db)):
 
     return leyenda_dict
 
+@router.get("/leyendasEdicion/{leyenda_id}")
+def obtener_leyenda_edicion(leyenda_id: int, db: Session = Depends(get_db)):
+    leyenda = db.get(Leyenda, leyenda_id)
+    if not leyenda:
+        raise HTTPException(status_code=404, detail="Leyenda no encontrada")
+    return leyenda
+
 @router.post("/leyendas")
 async def crear_leyenda(
     imagen: UploadFile = Form(...),
@@ -188,6 +195,13 @@ def obtener_provincias(db: Session = Depends(get_db)):
     if not provincias:
         raise HTTPException(status_code=404, detail="Provincias no encontradas")
     return provincias
+
+@router.get("/categorias")
+def obtener_categorias(db: Session = Depends(get_db)):
+    categorias = db.query(Categoria).all()
+    if not categorias:
+        raise HTTPException(status_code=404, detail="Categorias no encontradas")
+    return categorias
 
 @router.get("/cantones")
 def obtener_cantones(db: Session = Depends(get_db)):
