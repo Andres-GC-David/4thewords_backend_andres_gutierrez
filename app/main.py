@@ -1,9 +1,9 @@
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
+from app.routes.leyendas import router as leyendas_router
 
 app = FastAPI()
 
-app.mount("/imagenes", StaticFiles(directory="imagenes"), name="imagenes")
+app.include_router(leyendas_router)
 
 @app.get("/")
 async def root():
