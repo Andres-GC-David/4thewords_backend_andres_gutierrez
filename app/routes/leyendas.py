@@ -67,8 +67,31 @@ def filtrar_leyendas(nombre: Optional[str] = None, provincias: Optional[List[int
         raise HTTPException(
             status_code=404, detail="No se encontraron leyendas con los filtros aplicados."
         )
+    leyendas_con_fechas = []
+    for leyenda in leyendas:
+        leyenda_dict = leyenda.dict()
+        fecha_de_leyenda = leyenda.fecha_de_leyenda
+        fecha_actual = date.today()
+        diferencia = relativedelta(fecha_actual, fecha_de_leyenda)
 
-    return leyendas
+        if diferencia.years > 0:
+            leyenda_dict["fecha_de_leyenda"] = f"hace {diferencia.years} años"
+        elif diferencia.months > 0:
+            leyenda_dict["fecha_de_leyenda"] = f"hace {diferencia.months} meses"
+        elif diferencia.days > 0:
+            leyenda_dict["fecha_de_leyenda"] = f"hace {diferencia.days} días"
+        else:
+            leyenda_dict["fecha_de_leyenda"] = "hoy"
+
+        leyenda_dict["provincia"] = db.get(Provincia, leyenda.provincia).nombre
+        leyenda_dict["canton"] = db.get(Canton, leyenda.canton).nombre
+        leyenda_dict["distrito"] = db.get(Distrito, leyenda.distrito).nombre
+        leyenda_dict["categoria"] = db.get(Categoria, leyenda.categoria).nombre
+
+        leyendas_con_fechas.append(leyenda_dict)
+
+    return leyendas_con_fechas
+    
 
 @router.get("/leyendas/{leyenda_id}")
 def obtener_leyenda(leyenda_id: int, db: Session = Depends(get_db)):
