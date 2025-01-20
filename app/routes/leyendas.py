@@ -6,6 +6,8 @@ from app.models.models import Leyenda, Categoria, Provincia, Canton, Distrito
 from fastapi.responses import FileResponse
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
+from typing import Optional, List
+from fastapi import Query
 
 router = APIRouter()
 IMAGENES_DIR = os.path.join(os.path.dirname(__file__), "../../imagenes")
@@ -40,6 +42,33 @@ def obtener_leyendas(db: Session = Depends(get_db)):
         leyendas_con_fechas.append(leyenda_dict)
 
     return leyendas_con_fechas
+
+@router.get("/leyendas/filtrar")
+def filtrar_leyendas(nombre: Optional[str] = None, provincias: Optional[List[int]] = Query(None), cantones: Optional[List[int]] = Query(None), distritos: Optional[List[int]] = Query(None), categorias: Optional[List[int]] = Query(None), db: Session = Depends(get_db),):
+    query = db.query(Leyenda)
+    if nombre:
+        query = query.filter(Leyenda.nombre.ilike(f"%{nombre}%"))
+
+    if provincias:
+        query = query.filter(Leyenda.provincia.in_(provincias))
+
+    if cantones:
+        query = query.filter(Leyenda.canton.in_(cantones))
+
+    if distritos:
+        query = query.filter(Leyenda.distrito.in_(distritos))
+
+    if categorias:
+        query = query.filter(Leyenda.categoria.in_(categorias))
+
+    leyendas = query.all()
+
+    if not leyendas:
+        raise HTTPException(
+            status_code=404, detail="No se encontraron leyendas con los filtros aplicados."
+        )
+
+    return leyendas
 
 @router.get("/leyendas/{leyenda_id}")
 def obtener_leyenda(leyenda_id: int, db: Session = Depends(get_db)):
@@ -325,12 +354,15 @@ def obtener_leyendas_por_distrito(distrito_id: int, canton_id: int, db: Session 
 
     return leyendas_en_distritos
 
-@router.get("/leyendas/categorias/{categoria_id}")    
+
+@router.get("/leyendas/categorias/{categoria_id}")
 def obtener_leyendas_por_categoria(categoria_id: int, db: Session = Depends(get_db)):
-    leyendas = db.query(Leyenda).filter(Leyenda.categoria == categoria_id).all()
+    leyendas = db.query(Leyenda).filter(
+        Leyenda.categoria == categoria_id).all()
     if not leyendas:
-        raise HTTPException(status_code=404, detail="No se encontraron leyendas asociadas a esta Categoria")
-    
+        raise HTTPException(
+            status_code=404, detail="No se encontraron leyendas asociadas a esta Categoria")
+
     leyendas_en_categorias = []
     for leyenda in leyendas:
         leyenda_dict = leyenda.dict()
